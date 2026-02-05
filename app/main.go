@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"os/exec"
 	"strconv"
 	"strings"
 )
@@ -83,6 +84,11 @@ func typeCmd(args []string) error {
 
 	if _, ok := commands[name]; ok {
 		fmt.Println(name + " is a shell builtin")
+		return nil
+	}
+
+	if path, err := exec.LookPath(name); err == nil {
+		fmt.Println(name + " is " + path)
 		return nil
 	}
 
