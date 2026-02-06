@@ -14,6 +14,7 @@ func defaultBuiltins(s *Shell) map[string]CommandFunc {
 		"echo": s.echoCmd,
 		"type": s.typeCmd,
 		"pwd":  s.pwdCmd,
+		"cd":   s.cdCmd,
 	}
 }
 
@@ -66,5 +67,24 @@ func (s *Shell) pwdCmd(args []string) error {
 		return err
 	}
 	fmt.Fprintln(s.out, pwd)
+	return nil
+}
+
+func (s *Shell) cdCmd(args []string) error {
+	var target string
+	if len(args) == 0 || args[0] == "~" {
+		var err error
+		target, err = os.UserHomeDir()
+		if err != nil {
+			fmt.Fprintf(s.err, "cd: %v\n", err)
+			return err
+		}
+	} else {
+		target = args[0]
+	}
+	err := os.Chdir(target)
+	if err != nil {
+		fmt.Fprintf(s.err, "cd: %s: no such file or directory\n", target)
+	}
 	return nil
 }
