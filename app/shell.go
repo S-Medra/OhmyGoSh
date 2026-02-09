@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"io"
 	"strings"
+
+	"github.com/S-Medra/OhmyGoSh/app/internal/shlex"
 )
 
 type CommandFunc func(args []string) error
@@ -44,7 +46,7 @@ func (s *Shell) Run() error {
 		}
 
 		line = strings.TrimSuffix(line, "\n")
-		args, err := parseArgs(line)
+		args, err := shlex.Split(line)
 		if err != nil {
 			fmt.Fprintln(s.err, "Error:", err)
 			continue
