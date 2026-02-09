@@ -10,9 +10,26 @@ func parseArgs(line string) ([]string, error) {
 	var current strings.Builder
 	inSingleQuote := false
 	inDoubleQuote := false
+	escaped := false
 	inArg := false
 
 	for _, r := range line {
+		if escaped {
+			if inDoubleQuote {
+				if r == '"' || r == '\\' {
+					current.WriteRune(r)
+				} else {
+					current.WriteRune('\\')
+					current.WriteRune(r)
+				}
+			} else {
+				current.WriteRune(r)
+			}
+			inArg = true
+			escaped = false
+			continue
+		}
+
 		switch {
 		case inSingleQuote:
 			if r == '\'' {
@@ -24,9 +41,14 @@ func parseArgs(line string) ([]string, error) {
 		case inDoubleQuote:
 			if r == '"' {
 				inDoubleQuote = false
+			} else if r == '\\' {
+				escaped = true
 			} else {
 				current.WriteRune(r)
 			}
+			inArg = true
+		case r == '\\':
+			escaped = true
 			inArg = true
 		case r == '\'':
 			inSingleQuote = true
