@@ -6,10 +6,11 @@ import (
 	"io"
 	"strings"
 
+	"github.com/S-Medra/OhmyGoSh/app/internal/parse"
 	"github.com/S-Medra/OhmyGoSh/app/internal/shlex"
 )
 
-type CommandFunc func(args []string) error
+type CommandFunc func(args []string, out io.Writer) error
 
 type Shell struct {
 	in       io.Reader
@@ -46,27 +47,39 @@ func (s *Shell) Run() error {
 		}
 
 		line = strings.TrimSuffix(line, "\n")
-		args, err := shlex.Split(line)
+		tokens, err := shlex.Split(line)
 		if err != nil {
 			fmt.Fprintln(s.err, "Error:", err)
 			continue
 		}
 
-		if len(args) == 0 {
+		if len(tokens) == 0 {
 			continue
 		}
 
-		name := args[0]
-		cmdArgs := args[1:]
+		cmd, cmdArgs, redirect, err := parse.ParseCommand(tokens)
+		if err != nil {
+			fmt.Fprintln(s.err, "Error:", err)
+			continue
+		}
 
-		if cmdFn, ok := s.commands[name]; ok {
-			if err := cmdFn(cmdArgs); err != nil {
+		rw, err := redirect.Open()
+		if err != nil {
+			fmt.Fprintf(s.err, "Error creating redirect file: %v\n", err)
+			continue
+		}
+		defer rw.Close()
+
+		cmdOut := rw.Writer(s.out)
+
+		if cmdFn, ok := s.commands[cmd]; ok {
+			if err := cmdFn(cmdArgs, cmdOut); err != nil {
 				fmt.Fprintln(s.err, "Error:", err)
 			}
 			continue
 		}
 
-		if err := runExternal(name, cmdArgs, s.in, s.out, s.err); err != nil {
+		if err := runExternal(cmd, cmdArgs, s.in, cmdOut, s.err); err != nil {
 			fmt.Fprintln(s.err, "Error:", err)
 		}
 	}
