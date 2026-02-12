@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"io"
+	"os"
 	"strings"
 
 	"github.com/ixiSam/OhmyGoSh/app/internal/parse"
@@ -13,6 +14,7 @@ import (
 type CommandFunc func(args []string, out io.Writer) error
 
 type Shell struct {
+	cwd      string
 	out      io.Writer
 	err      io.Writer
 	reader   *bufio.Reader
@@ -20,7 +22,9 @@ type Shell struct {
 }
 
 func New(in io.Reader, out, err io.Writer) *Shell {
+	cwd, _ := os.Getwd()
 	s := &Shell{
+		cwd:    cwd,
 		out:    out,
 		err:    err,
 		reader: bufio.NewReader(in),

@@ -5,6 +5,7 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strconv"
 	"strings"
 )
@@ -63,12 +64,7 @@ func (s *Shell) typeCmd(args []string, out io.Writer) error {
 }
 
 func (s *Shell) pwdCmd(args []string, out io.Writer) error {
-	pwd, err := os.Getwd()
-	if err != nil {
-		fmt.Fprintf(s.err, "Error getting dir: %v\n", err)
-		return err
-	}
-	fmt.Fprintln(out, pwd)
+	fmt.Fprintln(out, s.cwd)
 	return nil
 }
 
@@ -81,6 +77,13 @@ func (s *Shell) cdCmd(args []string, out io.Writer) error {
 			fmt.Fprintf(s.err, "cd: %v\n", err)
 			return err
 		}
+	} else if strings.HasPrefix(args[0], "~/") {
+		home, err := os.UserHomeDir()
+		if err != nil {
+			fmt.Fprintf(s.err, "cd: %v\n", err)
+			return err
+		}
+		target = filepath.Join(home, strings.TrimPrefix(args[0], "~/"))
 	} else {
 		target = args[0]
 	}
@@ -88,5 +91,6 @@ func (s *Shell) cdCmd(args []string, out io.Writer) error {
 		fmt.Fprintf(s.err, "cd: %s: no such file or directory\n", target)
 		return err
 	}
+	s.cwd, _ = os.Getwd()
 	return nil
 }
