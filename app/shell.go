@@ -57,7 +57,7 @@ func (s *Shell) Run() error {
 			continue
 		}
 
-		cmd, cmdArgs, redirect, err := parse.ParseCommand(tokens)
+		cmd, cmdArgs, redirect, errorRedirect, err := parse.ParseCommand(tokens)
 		if err != nil {
 			fmt.Fprintln(s.err, "Error:", err)
 			continue
@@ -70,7 +70,15 @@ func (s *Shell) Run() error {
 		}
 		defer rw.Close()
 
+		erw, err := errorRedirect.Open()
+		if err != nil {
+			fmt.Fprintf(s.err, "Error creating error redirect file: %v\n", err)
+			continue
+		}
+		defer erw.Close()
+
 		cmdOut := rw.Writer(s.out)
+		cmdErr := erw.Writer(s.err)
 
 		if cmdFn, ok := s.commands[cmd]; ok {
 			if err := cmdFn(cmdArgs, cmdOut); err != nil {
@@ -79,7 +87,7 @@ func (s *Shell) Run() error {
 			continue
 		}
 
-		if err := runExternal(cmd, cmdArgs, s.in, cmdOut, s.err); err != nil {
+		if err := runExternal(cmd, cmdArgs, s.in, cmdOut, cmdErr); err != nil {
 			fmt.Fprintln(s.err, "Error:", err)
 		}
 	}

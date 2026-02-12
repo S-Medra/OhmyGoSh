@@ -6,7 +6,7 @@ import (
 )
 
 func TestParseCommand_Basic(t *testing.T) {
-	cmd, args, redirect, err := ParseCommand([]string{"echo", "hello"})
+	cmd, args, redirect, errorRedirect, err := ParseCommand([]string{"echo", "hello"})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -19,10 +19,13 @@ func TestParseCommand_Basic(t *testing.T) {
 	if redirect != nil {
 		t.Errorf("expected nil redirect, got %v", redirect)
 	}
+	if errorRedirect != nil {
+		t.Errorf("expected nil errorRedirect, got %v", errorRedirect)
+	}
 }
 
 func TestParseCommand_WithRedirect(t *testing.T) {
-	cmd, args, redirect, err := ParseCommand([]string{"echo", "hello", ">", "file.txt"})
+	cmd, args, redirect, errorRedirect, err := ParseCommand([]string{"echo", "hello", ">", "file.txt"})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -38,17 +41,20 @@ func TestParseCommand_WithRedirect(t *testing.T) {
 	if redirect.Target != "file.txt" {
 		t.Errorf("expected redirect target 'file.txt', got '%s'", redirect.Target)
 	}
+	if errorRedirect != nil {
+		t.Errorf("expected nil errorRedirect, got %v", errorRedirect)
+	}
 }
 
 func TestParseCommand_MissingRedirectTarget(t *testing.T) {
-	_, _, _, err := ParseCommand([]string{"echo", ">"})
+	_, _, _, _, err := ParseCommand([]string{"echo", ">"})
 	if err == nil {
 		t.Errorf("expected error for missing redirect target, got nil")
 	}
 }
 
 func TestParseCommand_EmptyTokens(t *testing.T) {
-	_, _, _, err := ParseCommand([]string{})
+	_, _, _, _, err := ParseCommand([]string{})
 	if err == nil {
 		t.Errorf("expected error for empty tokens, got nil")
 	}

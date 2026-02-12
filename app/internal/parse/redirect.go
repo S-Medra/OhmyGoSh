@@ -8,6 +8,7 @@ import (
 type Redirect struct {
 	FD     int
 	Target string
+	Append bool
 }
 
 type RedirectWriter struct {
@@ -19,7 +20,14 @@ func (r *Redirect) Open() (*RedirectWriter, error) {
 		return &RedirectWriter{file: nil}, nil
 	}
 
-	file, err := os.Create(r.Target)
+	flag := os.O_WRONLY | os.O_CREATE
+	if r.Append {
+		flag |= os.O_APPEND
+	} else {
+		flag |= os.O_TRUNC
+	}
+
+	file, err := os.OpenFile(r.Target, flag, 0644)
 	if err != nil {
 		return nil, err
 	}
