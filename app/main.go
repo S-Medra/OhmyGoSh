@@ -3,12 +3,14 @@ package main
 import (
 	"fmt"
 	"os"
+
+	"github.com/ixiSam/OhmyGoSh/app/shell"
 )
 
 func main() {
-	shell := NewShell(os.Stdin, os.Stdout, os.Stderr)
+	s := shell.New(os.Stdin, os.Stdout, os.Stderr)
 
-	if err := shell.Run(); err != nil {
+	if err := s.Run(); err != nil {
 		fmt.Fprintln(os.Stderr, "Shell exited with error:", err)
 		os.Exit(1)
 	}

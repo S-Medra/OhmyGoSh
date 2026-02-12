@@ -1,3 +1,3 @@
-module github.com/S-Medra/OhmyGoSh
+module github.com/ixiSam/OhmyGoSh
 
 go 1.25.6

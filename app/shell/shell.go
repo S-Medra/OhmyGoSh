@@ -1,4 +1,4 @@
-package main
+package shell
 
 import (
 	"bufio"
@@ -6,8 +6,8 @@ import (
 	"io"
 	"strings"
 
-	"github.com/S-Medra/OhmyGoSh/app/internal/parse"
-	"github.com/S-Medra/OhmyGoSh/app/internal/shlex"
+	"github.com/ixiSam/OhmyGoSh/app/internal/parse"
+	"github.com/ixiSam/OhmyGoSh/app/internal/shlex"
 )
 
 type CommandFunc func(args []string, out io.Writer) error
@@ -20,7 +20,7 @@ type Shell struct {
 	commands map[string]CommandFunc
 }
 
-func NewShell(in io.Reader, out, err io.Writer) *Shell {
+func New(in io.Reader, out, err io.Writer) *Shell {
 	s := &Shell{
 		in:     in,
 		out:    out,
@@ -40,7 +40,7 @@ func (s *Shell) Run() error {
 		line, err := s.reader.ReadString('\n')
 		if err != nil {
 			if err == io.EOF {
-				return nil // Exit gracefully on Ctrl+D
+				return nil
 			}
 			fmt.Fprintln(s.err, "Error reading command:", err)
 			return err
@@ -63,22 +63,15 @@ func (s *Shell) Run() error {
 			continue
 		}
 
-		rw, err := redirect.Open()
-		if err != nil {
-			fmt.Fprintf(s.err, "Error creating redirect file: %v\n", err)
+		var rp redirectPair
+		if err := rp.open(redirect, errorRedirect); err != nil {
+			fmt.Fprintln(s.err, "Error:", err)
 			continue
 		}
-		defer rw.Close()
+		defer rp.Close()
 
-		erw, err := errorRedirect.Open()
-		if err != nil {
-			fmt.Fprintf(s.err, "Error creating error redirect file: %v\n", err)
-			continue
-		}
-		defer erw.Close()
-
-		cmdOut := rw.Writer(s.out)
-		cmdErr := erw.Writer(s.err)
+		cmdOut := rp.stdout.Writer(s.out)
+		cmdErr := rp.stderr.Writer(s.err)
 
 		if cmdFn, ok := s.commands[cmd]; ok {
 			if err := cmdFn(cmdArgs, cmdOut); err != nil {
@@ -87,7 +80,7 @@ func (s *Shell) Run() error {
 			continue
 		}
 
-		if err := runExternal(cmd, cmdArgs, s.in, cmdOut, cmdErr); err != nil {
+		if err := runExternal(cmd, cmdArgs, cmdOut, cmdErr); err != nil {
 			fmt.Fprintln(s.err, "Error:", err)
 		}
 	}
