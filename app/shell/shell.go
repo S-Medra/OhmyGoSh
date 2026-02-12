@@ -57,14 +57,14 @@ func (s *Shell) Run() error {
 			continue
 		}
 
-		cmd, cmdArgs, redirect, errorRedirect, err := parse.ParseCommand(tokens)
-		if err != nil {
-			fmt.Fprintln(s.err, "Error:", err)
+		result := parse.ParseCommand(tokens)
+		if result.Err != nil {
+			fmt.Fprintln(s.err, "Error:", result.Err)
 			continue
 		}
 
 		var rp redirectPair
-		if err := rp.open(redirect, errorRedirect); err != nil {
+		if err := rp.open(result.Redirect, result.ErrorRedirect); err != nil {
 			fmt.Fprintln(s.err, "Error:", err)
 			continue
 		}
@@ -73,14 +73,14 @@ func (s *Shell) Run() error {
 		cmdOut := rp.stdout.Writer(s.out)
 		cmdErr := rp.stderr.Writer(s.err)
 
-		if cmdFn, ok := s.commands[cmd]; ok {
-			if err := cmdFn(cmdArgs, cmdOut); err != nil {
+		if cmdFn, ok := s.commands[result.Cmd]; ok {
+			if err := cmdFn(result.Args, cmdOut); err != nil {
 				fmt.Fprintln(s.err, "Error:", err)
 			}
 			continue
 		}
 
-		if err := runExternal(cmd, cmdArgs, cmdOut, cmdErr); err != nil {
+		if err := runExternal(result.Cmd, result.Args, cmdOut, cmdErr); err != nil {
 			fmt.Fprintln(s.err, "Error:", err)
 		}
 	}

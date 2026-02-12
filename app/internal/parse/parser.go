@@ -2,25 +2,34 @@ package parse
 
 import "fmt"
 
-func ParseCommand(tokens []string) (string, []string, *Redirect, *Redirect, error) {
+type ParseResult struct {
+	Cmd           string
+	Args          []string
+	Redirect      *Redirect
+	ErrorRedirect *Redirect
+	Err           error
+}
+
+func ParseCommand(tokens []string) *ParseResult {
 	if len(tokens) == 0 {
-		return "", nil, nil, nil, fmt.Errorf("no command provided")
+		return &ParseResult{Err: fmt.Errorf("no command provided")}
 	}
 
-	cmd := tokens[0]
-	var args []string
-	var redirect *Redirect
-	var errorRedirect *Redirect
+	result := &ParseResult{
+		Cmd:  tokens[0],
+		Args: []string{},
+	}
 
 	for i := 1; i < len(tokens); i++ {
 		token := tokens[i]
 		switch token {
 		case ">", "1>":
 			if i+1 >= len(tokens) {
-				return "", nil, nil, nil, fmt.Errorf("syntax error: redirect operator %q at end of line with no target", token)
+				result.Err = fmt.Errorf("syntax error: redirect operator %q at end of line with no target", token)
+				return result
 			}
 			target := tokens[i+1]
-			redirect = &Redirect{
+			result.Redirect = &Redirect{
 				FD:     1,
 				Target: target,
 				Append: false,
@@ -28,10 +37,11 @@ func ParseCommand(tokens []string) (string, []string, *Redirect, *Redirect, erro
 			i++
 		case ">>", "1>>":
 			if i+1 >= len(tokens) {
-				return "", nil, nil, nil, fmt.Errorf("syntax error: redirect operator %q at end of line with no target", token)
+				result.Err = fmt.Errorf("syntax error: redirect operator %q at end of line with no target", token)
+				return result
 			}
 			target := tokens[i+1]
-			redirect = &Redirect{
+			result.Redirect = &Redirect{
 				FD:     1,
 				Target: target,
 				Append: true,
@@ -39,10 +49,11 @@ func ParseCommand(tokens []string) (string, []string, *Redirect, *Redirect, erro
 			i++
 		case "2>":
 			if i+1 >= len(tokens) {
-				return "", nil, nil, nil, fmt.Errorf("syntax error: redirect operator %q at end of line with no target", token)
+				result.Err = fmt.Errorf("syntax error: redirect operator %q at end of line with no target", token)
+				return result
 			}
 			target := tokens[i+1]
-			errorRedirect = &Redirect{
+			result.ErrorRedirect = &Redirect{
 				FD:     2,
 				Target: target,
 				Append: false,
@@ -50,19 +61,20 @@ func ParseCommand(tokens []string) (string, []string, *Redirect, *Redirect, erro
 			i++
 		case "2>>":
 			if i+1 >= len(tokens) {
-				return "", nil, nil, nil, fmt.Errorf("syntax error: redirect operator %q at end of line with no target", token)
+				result.Err = fmt.Errorf("syntax error: redirect operator %q at end of line with no target", token)
+				return result
 			}
 			target := tokens[i+1]
-			errorRedirect = &Redirect{
+			result.ErrorRedirect = &Redirect{
 				FD:     2,
 				Target: target,
 				Append: true,
 			}
 			i++
 		default:
-			args = append(args, token)
+			result.Args = append(result.Args, token)
 		}
 	}
 
-	return cmd, args, redirect, errorRedirect, nil
+	return result
 }
