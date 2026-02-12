@@ -84,9 +84,9 @@ func (s *Shell) cdCmd(args []string, out io.Writer) error {
 	} else {
 		target = args[0]
 	}
-	err := os.Chdir(target)
-	if err != nil {
+	if err := os.Chdir(target); err != nil {
 		fmt.Fprintf(s.err, "cd: %s: no such file or directory\n", target)
+		return err
 	}
 	return nil
 }

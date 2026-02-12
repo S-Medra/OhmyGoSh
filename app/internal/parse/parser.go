@@ -20,12 +20,16 @@ func ParseCommand(tokens []string) *ParseResult {
 		Args: []string{},
 	}
 
+	missingTargetErr := func(token string) {
+		result.Err = fmt.Errorf("syntax error: redirect operator %q at end of line with no target", token)
+	}
+
 	for i := 1; i < len(tokens); i++ {
 		token := tokens[i]
 		switch token {
 		case ">", "1>":
 			if i+1 >= len(tokens) {
-				result.Err = fmt.Errorf("syntax error: redirect operator %q at end of line with no target", token)
+				missingTargetErr(token)
 				return result
 			}
 			target := tokens[i+1]
@@ -37,7 +41,7 @@ func ParseCommand(tokens []string) *ParseResult {
 			i++
 		case ">>", "1>>":
 			if i+1 >= len(tokens) {
-				result.Err = fmt.Errorf("syntax error: redirect operator %q at end of line with no target", token)
+				missingTargetErr(token)
 				return result
 			}
 			target := tokens[i+1]
@@ -49,7 +53,7 @@ func ParseCommand(tokens []string) *ParseResult {
 			i++
 		case "2>":
 			if i+1 >= len(tokens) {
-				result.Err = fmt.Errorf("syntax error: redirect operator %q at end of line with no target", token)
+				missingTargetErr(token)
 				return result
 			}
 			target := tokens[i+1]
@@ -61,7 +65,7 @@ func ParseCommand(tokens []string) *ParseResult {
 			i++
 		case "2>>":
 			if i+1 >= len(tokens) {
-				result.Err = fmt.Errorf("syntax error: redirect operator %q at end of line with no target", token)
+				missingTargetErr(token)
 				return result
 			}
 			target := tokens[i+1]

@@ -13,7 +13,6 @@ import (
 type CommandFunc func(args []string, out io.Writer) error
 
 type Shell struct {
-	in       io.Reader
 	out      io.Writer
 	err      io.Writer
 	reader   *bufio.Reader
@@ -22,7 +21,6 @@ type Shell struct {
 
 func New(in io.Reader, out, err io.Writer) *Shell {
 	s := &Shell{
-		in:     in,
 		out:    out,
 		err:    err,
 		reader: bufio.NewReader(in),
