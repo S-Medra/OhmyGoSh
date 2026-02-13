@@ -70,26 +70,23 @@ func (s *Shell) pwdCmd(args []string, out io.Writer) error {
 
 func (s *Shell) cdCmd(args []string, out io.Writer) error {
 	var target string
-	if len(args) == 0 || args[0] == "~" {
-		var err error
-		target, err = os.UserHomeDir()
-		if err != nil {
-			fmt.Fprintf(s.err, "cd: %v\n", err)
-			return err
-		}
-	} else if strings.HasPrefix(args[0], "~/") {
+	if len(args) == 0 || args[0] == "~" || strings.HasPrefix(args[0], "~/") {
 		home, err := os.UserHomeDir()
 		if err != nil {
 			fmt.Fprintf(s.err, "cd: %v\n", err)
-			return err
+			return nil
 		}
-		target = filepath.Join(home, strings.TrimPrefix(args[0], "~/"))
+		if len(args) == 0 || args[0] == "~" {
+			target = home
+		} else {
+			target = filepath.Join(home, strings.TrimPrefix(args[0], "~/"))
+		}
 	} else {
 		target = args[0]
 	}
 	if err := os.Chdir(target); err != nil {
 		fmt.Fprintf(s.err, "cd: %s: no such file or directory\n", target)
-		return err
+		return nil
 	}
 	s.cwd, _ = os.Getwd()
 	return nil
