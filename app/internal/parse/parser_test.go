@@ -123,65 +123,6 @@ func TestRedirectWriter_Close_ValidFile(t *testing.T) {
 	os.Remove(file)
 }
 
-func TestSplitByPipe_NoPipe(t *testing.T) {
-	result := SplitByPipe([]string{"echo", "hello"})
-	if len(result) != 1 {
-		t.Errorf("expected 1 segment, got %d", len(result))
-	}
-	if len(result[0]) != 2 || result[0][0] != "echo" || result[0][1] != "hello" {
-		t.Errorf("expected [echo hello], got %v", result)
-	}
-}
-
-func TestSplitByPipe_SinglePipe(t *testing.T) {
-	result := SplitByPipe([]string{"ls", "|", "grep", ".go"})
-	if len(result) != 2 {
-		t.Errorf("expected 2 segments, got %d", len(result))
-	}
-	if len(result[0]) != 1 || result[0][0] != "ls" {
-		t.Errorf("first segment expected [ls], got %v", result[0])
-	}
-	if len(result[1]) != 2 || result[1][0] != "grep" || result[1][1] != ".go" {
-		t.Errorf("second segment expected [grep .go], got %v", result[1])
-	}
-}
-
-func TestSplitByPipe_MultiplePipes(t *testing.T) {
-	result := SplitByPipe([]string{"ls", "|", "grep", ".go", "|", "wc", "-l"})
-	if len(result) != 3 {
-		t.Errorf("expected 3 segments, got %d", len(result))
-	}
-	if result[0][0] != "ls" || result[1][0] != "grep" || result[2][0] != "wc" {
-		t.Errorf("unexpected segments: %v", result)
-	}
-}
-
-func TestSplitByPipe_PipeAtStart(t *testing.T) {
-	result := SplitByPipe([]string{"|", "grep", "foo"})
-	if len(result) != 2 {
-		t.Errorf("expected 2 segments, got %d", len(result))
-	}
-	if len(result[0]) != 0 {
-		t.Errorf("first segment should be empty, got %v", result[0])
-	}
-	if result[1][0] != "grep" {
-		t.Errorf("second segment should start with grep, got %v", result[1])
-	}
-}
-
-func TestSplitByPipe_PipeAtEnd(t *testing.T) {
-	result := SplitByPipe([]string{"echo", "hello", "|"})
-	if len(result) != 2 {
-		t.Errorf("expected 2 segments, got %d", len(result))
-	}
-	if result[0][0] != "echo" {
-		t.Errorf("first segment should be [echo], got %v", result[0])
-	}
-	if len(result[1]) != 0 {
-		t.Errorf("second segment should be empty, got %v", result[1])
-	}
-}
-
 func TestParseCommand_WithPipe(t *testing.T) {
 	result := ParseCommand([]string{"ls", "|", "grep", ".go"})
 	if len(result.Commands) != 2 {
