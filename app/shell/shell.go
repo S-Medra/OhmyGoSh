@@ -94,7 +94,7 @@ func (s *Shell) Run() error {
 				continue
 			}
 
-			var rp redirectPair
+			var rp Redirects
 			if err := rp.open(cmd.Redirect, cmd.ErrorRedirect); err != nil {
 				fmt.Fprintln(s.err, "Error:", err)
 				continue
