@@ -82,7 +82,8 @@ func (s *Shell) Run() error {
 		result := parse.ParseCommand(tokens)
 
 		if len(result.Commands) > 1 {
-			if err := runPipeline(result, s.out, s.err); err != nil {
+			p := NewPipeline(result.Commands, s.out, s.err, s.commands)
+			if err := p.Run(); err != nil {
 				fmt.Fprintln(s.err, "Error:", err)
 			}
 			continue
