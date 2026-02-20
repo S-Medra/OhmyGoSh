@@ -39,6 +39,9 @@ func (l *Lexer) Run(line string) ([]string, error) {
 		case r == '"':
 			l.inDoubleQuote = true
 			l.inArg = true
+		case r == '|':
+			l.flushArg()
+			l.args = append(l.args, "|")
 		case isSpace(r):
 			l.flushArg()
 		default:

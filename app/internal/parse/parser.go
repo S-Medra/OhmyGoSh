@@ -10,7 +10,11 @@ type ParseResult struct {
 	Err           error
 }
 
-func ParseCommand(tokens []string) *ParseResult {
+type Pipeline struct {
+	Commands []*ParseResult
+}
+
+func parseSingleCommand(tokens []string) *ParseResult {
 	if len(tokens) == 0 {
 		return &ParseResult{Err: fmt.Errorf("no command provided")}
 	}
@@ -79,6 +83,36 @@ func ParseCommand(tokens []string) *ParseResult {
 			result.Args = append(result.Args, token)
 		}
 	}
+
+	return result
+}
+
+func ParseCommand(tokens []string) *Pipeline {
+	commands := SplitByPipe(tokens)
+	pipeline := &Pipeline{
+		Commands: make([]*ParseResult, len(commands)),
+	}
+
+	for i, cmdTokens := range commands {
+		pipeline.Commands[i] = parseSingleCommand(cmdTokens)
+	}
+
+	return pipeline
+}
+
+func SplitByPipe(tokens []string) [][]string {
+	var result [][]string
+	var current []string
+
+	for _, token := range tokens {
+		if token == "|" {
+			result = append(result, current)
+			current = []string{}
+		} else {
+			current = append(current, token)
+		}
+	}
+	result = append(result, current)
 
 	return result
 }

@@ -80,35 +80,43 @@ func (s *Shell) Run() error {
 		}
 
 		result := parse.ParseCommand(tokens)
-		if result.Err != nil {
-			fmt.Fprintln(s.err, "Error:", result.Err)
-			continue
-		}
 
-		var rp redirectPair
-		if err := rp.open(result.Redirect, result.ErrorRedirect); err != nil {
-			fmt.Fprintln(s.err, "Error:", err)
-			continue
-		}
-
-		// Close redirect files at end of each iteration to avoid leaking file handles.
-		// We use an immediately invoked function to ensure Close() runs even if we continue early.
-		func() {
-			defer rp.Close()
-
-			cmdOut := rp.stdout.Writer(s.out)
-			cmdErr := rp.stderr.Writer(s.err)
-
-			if cmd, ok := s.commands[result.Cmd]; ok {
-				if err := cmd(result.Args, cmdOut); err != nil {
-					fmt.Fprintln(s.err, "Error:", err)
-				}
-				return
-			}
-
-			if err := runExternal(result.Cmd, result.Args, cmdOut, cmdErr); err != nil {
+		if len(result.Commands) > 1 {
+			if err := runPipeline(result, s.out, s.err); err != nil {
 				fmt.Fprintln(s.err, "Error:", err)
 			}
-		}()
+			continue
+		}
+
+		for _, cmd := range result.Commands {
+			if cmd.Err != nil {
+				fmt.Fprintln(s.err, "Error:", cmd.Err)
+				continue
+			}
+
+			var rp redirectPair
+			if err := rp.open(cmd.Redirect, cmd.ErrorRedirect); err != nil {
+				fmt.Fprintln(s.err, "Error:", err)
+				continue
+			}
+
+			func() {
+				defer rp.Close()
+
+				cmdOut := rp.stdout.Writer(s.out)
+				cmdErr := rp.stderr.Writer(s.err)
+
+				if builtin, ok := s.commands[cmd.Cmd]; ok {
+					if err := builtin(cmd.Args, cmdOut); err != nil {
+						fmt.Fprintln(s.err, "Error:", err)
+					}
+					return
+				}
+
+				if err := runExternal(cmd.Cmd, cmd.Args, cmdOut, cmdErr); err != nil {
+					fmt.Fprintln(s.err, "Error:", err)
+				}
+			}()
+		}
 	}
 }
