@@ -57,7 +57,20 @@ func (s *Shell) Close() error {
 	return s.rl.Close()
 }
 
+const welcoMemessage string = `
+  ___  _               ___     ___ _    
+ / _ \| |_  _ __ _  _ / __|___/ __| |_  
+| (_) | ' \| '  \ || | (_ / _ \__ \ ' \ 
+ \___/|_||_|_|_|_\_, |\___\___/___/_||_|
+                 |__/                   
+
+ Welcome to OhmyGoSh! A shell written in Go`
+
+func (s *Shell) welcome() {
+	fmt.Fprintln(s.out, welcoMemessage)
+}
 func (s *Shell) Run() error {
+	s.welcome()
 	for {
 		line, err := s.rl.ReadLine()
 		if err != nil {

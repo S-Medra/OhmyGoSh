@@ -9,7 +9,7 @@ A custom Unix shell implementation in Go, built as a learning project to underst
 - **Redirection**: stdout (`>`, `>>`) and stderr (`2>`, `2>>`)
 - **External commands**: Execute any binary in PATH
 - **Tab completion**: Builtins, PATH executables, and file paths
-- **Interactive**: Ctrl+C interupt handling, command history with arrow keys
+- **Interactive**: Ctrl+C interrupt handling, command history with arrow keys
 
 ## Architecture
 
@@ -20,7 +20,7 @@ app/
 │   ├── shell.go         # Core loop
 │   ├── builtins.go      # Builtin commands
 │   ├── pipeline.go      # Pipe execution
-│   ├── executor.go      # Redirection
+│   ├── executor.go      # Command excution
 │   ├── external.go      # External commands
 │   └── completer.go     # Tab completion
 └── internal/
@@ -40,23 +40,32 @@ Uses Go's `internal` package pattern to enforce encapsulation.
 
 Started as a simple REPL, added features one at a time.
 
-- **Basic REPL** - print prompt, read line, print output, repeat. *Learned how a read-print loop works, and the difference between handling Ctrl+C (interrupt) vs Ctrl+D (exit).*
+- **Basic REPL** - print prompt, read line, print output, repeat. 
+*Learned how a read-print loop works, and the difference between handling Ctrl+C (interrupt) vs Ctrl+D (exit).*
 
-- **Builtins** - implemented exit, echo, type. *Learned that commands run in-process, unlike external binaries.*
+- **Builtins** - implemented exit, echo, type. 
+*Learned that commands run in-process, unlike external binaries.*
 
-- **Dispatch map** - refactored builtins into `map[string]CommandFunc`. *This gives O(1) lookup and makes adding new commands trivial.*
+- **Dispatch map** - refactored builtins into `map[string]CommandFunc`. 
+*This gives O(1) lookup and makes adding new commands trivial.*
 
-- **External commands** - added os/exec to run PATH binaries. *Learned how exec.LookPath searches $PATH, and that external commands fork automatically via exec.Command.*
+- **External commands** - added os/exec to run PATH binaries. 
+*Learned how exec.LookPath searches $PATH, and that external commands fork automatically via exec.Command.*
 
-- **Lexer** - built from scratch to handle quotes and escaping. *Learned that tokenizing requires a state machine to track quote contexts.*
+- **Lexer** - built from scratch to handle quotes and escaping. 
+*Learned that tokenizing requires a state machine to track quote contexts.*
 
-- **Redirection** - stdout with >, >> and stderr with 2>. *Used file descriptors 1 and 2 for stdout/stderr, learned how O_CREATE/O_APPEND flags control file behavior.*
+- **Redirection** - stdout with >, >> and stderr with 2>. 
+*Used file descriptors 1 and 2 for stdout/stderr, learned how O_CREATE/O_APPEND flags control file behavior.*
 
-- **Tab completion** - completers for builtins, PATH, and file paths. *Built AutoCompleter to be context aware (command vs path), made sure to do background scanning using sync.Mutex for thread safety.*
+- **Tab completion** - completers for builtins, PATH, and file paths. 
+*Built AutoCompleter to be context aware (command vs path), made sure to do background scanning using sync.Mutex for thread safety.*
 
-- **Pipes** - chained commands with |. *Learned that os.Pipe() creates connected file descriptors, and closing write end signals EOF to reader.*
+- **Pipes** - chained commands with |. 
+*Learned that os.Pipe() creates connected file descriptors, and closing write end signals EOF to reader.*
 
-- **Piped builtins** - pipelines with builtin commands. *Cause builtins run in the same process they can't block on stdin - goroutines solve this by running them concurrently.*
+- **Piped builtins** - pipelines with builtin commands. 
+*Cause builtins run in the same process they can't block on stdin - goroutines solve this by running them concurrently.*
 
 ## Quick Start
 
